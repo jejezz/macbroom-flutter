@@ -6,10 +6,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show LicensePage, Theme, ThemeMode;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:garbage_cleaner_for_mac/about/macbroom_about.dart';
-import 'package:garbage_cleaner_for_mac/app_identity.dart';
-import 'package:garbage_cleaner_for_mac/l10n/app_localizations.dart';
-import 'package:garbage_cleaner_for_mac/theme/broom_theme.dart';
+import 'package:macbroom/about/macbroom_about.dart';
+import 'package:macbroom/app_identity.dart';
+import 'package:macbroom/l10n/app_localizations.dart';
+import 'package:macbroom/theme/broom_theme.dart';
 import 'package:macos_ui/macos_ui.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 

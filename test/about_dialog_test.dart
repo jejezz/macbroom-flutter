@@ -4,9 +4,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:garbage_cleaner_for_mac/about/about_dialog.dart';
-import 'package:garbage_cleaner_for_mac/app_identity.dart';
-import 'package:garbage_cleaner_for_mac/l10n/app_localizations.dart';
+import 'package:macbroom/about/about_dialog.dart';
+import 'package:macbroom/app_identity.dart';
+import 'package:macbroom/l10n/app_localizations.dart';
 
 Widget _host(Locale locale) => MaterialApp(
       locale: locale,

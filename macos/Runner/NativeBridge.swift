@@ -7,7 +7,7 @@ import FlutterMacOS
 ///
 /// Adding a new method = add a `case "name":` here + a Dart wrapper. That's it.
 class NativeBridge {
-  static let channelName = "garbage_cleaner/native"
+  static let channelName = "macbroom/native"
   private static var channel: FlutterMethodChannel?
 
   static func register(with messenger: FlutterBinaryMessenger) {

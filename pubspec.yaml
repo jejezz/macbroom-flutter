@@ -1,4 +1,4 @@
-name: garbage_cleaner_for_mac
+name: macbroom
 description: "MacBroom: a free, open-source cleaner for macOS."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
