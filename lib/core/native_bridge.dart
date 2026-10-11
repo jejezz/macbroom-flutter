@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 /// Dart side of the Swift bridge (macos/Runner/NativeBridge.swift).
 /// One static method per Swift `case`. Keep these thin: no logic, just types.
 class NativeBridge {
-  static const _ch = MethodChannel('garbage_cleaner/native');
+  static const _ch = MethodChannel('macbroom/native');
 
   /// Moves paths to the Trash. Returns paths that failed with their error.
   static Future<Map<String, String>> moveToTrash(List<String> paths) async {
