@@ -50,17 +50,20 @@ class NativeBridge {
     // args: { "paths": [String] }  ->  { "trashed": [String], "failed": {path: error} }
     case "moveToTrash":
       let paths = args["paths"] as? [String] ?? []
-      var trashed: [String] = []
-      var failed: [String: String] = [:]
-      for p in paths {
-        do {
-          try FileManager.default.trashItem(at: URL(fileURLWithPath: p), resultingItemURL: nil)
-          trashed.append(p)
-        } catch {
-          failed[p] = error.localizedDescription
+      // Off the main thread so a long batch doesn't freeze the window.
+      DispatchQueue.global(qos: .userInitiated).async {
+        var trashed: [String] = []
+        var failed: [String: String] = [:]
+        for p in paths {
+          do {
+            try FileManager.default.trashItem(at: URL(fileURLWithPath: p), resultingItemURL: nil)
+            trashed.append(p)
+          } catch {
+            failed[p] = error.localizedDescription
+          }
         }
+        result(["trashed": trashed, "failed": failed])
       }
-      result(["trashed": trashed, "failed": failed])
 
     // Permanently delete files/folders (NOT reversible — bypasses the Trash).
     // The user's Trash folder itself (~/.Trash) is emptied in place rather
@@ -68,35 +71,38 @@ class NativeBridge {
     // args: { "paths": [String] }  ->  { "deleted": [String], "failed": {path: error} }
     case "deletePermanently":
       let paths = args["paths"] as? [String] ?? []
-      let fm = FileManager.default
-      // Trash folders are emptied in place, never removed (home + iCloud Drive).
-      let home = fm.homeDirectoryForCurrentUser
-      let trashDirs: Set<String> = [
-        home.appendingPathComponent(".Trash").standardizedFileURL.path,
-        home.appendingPathComponent("Library/Mobile Documents/.Trash").standardizedFileURL.path,
-      ]
-      var deleted: [String] = []
-      var failed: [String: String] = [:]
-      for p in paths {
-        let url = URL(fileURLWithPath: p).standardizedFileURL
-        do {
-          if trashDirs.contains(url.path) {
-            // Keep going past a child that won't delete, then report it, so one
-            // stubborn item doesn't leave the rest of the Trash behind.
-            var firstError: Error?
-            for child in try fm.contentsOfDirectory(at: url, includingPropertiesForKeys: nil) {
-              do { try removeForce(child) } catch { firstError = firstError ?? error }
+      // Off the main thread so a long delete doesn't freeze the window.
+      DispatchQueue.global(qos: .userInitiated).async {
+        let fm = FileManager.default
+        // Trash folders are emptied in place, never removed (home + iCloud Drive).
+        let home = fm.homeDirectoryForCurrentUser
+        let trashDirs: Set<String> = [
+          home.appendingPathComponent(".Trash").standardizedFileURL.path,
+          home.appendingPathComponent("Library/Mobile Documents/.Trash").standardizedFileURL.path,
+        ]
+        var deleted: [String] = []
+        var failed: [String: String] = [:]
+        for p in paths {
+          let url = URL(fileURLWithPath: p).standardizedFileURL
+          do {
+            if trashDirs.contains(url.path) {
+              // Keep going past a child that won't delete, then report it, so one
+              // stubborn item doesn't leave the rest of the Trash behind.
+              var firstError: Error?
+              for child in try fm.contentsOfDirectory(at: url, includingPropertiesForKeys: nil) {
+                do { try removeForce(child) } catch { firstError = firstError ?? error }
+              }
+              if let e = firstError { throw e }
+            } else {
+              try removeForce(url)
             }
-            if let e = firstError { throw e }
-          } else {
-            try removeForce(url)
+            deleted.append(p)
+          } catch {
+            failed[p] = error.localizedDescription
           }
-          deleted.append(p)
-        } catch {
-          failed[p] = error.localizedDescription
         }
+        result(["deleted": deleted, "failed": failed])
       }
-      result(["deleted": deleted, "failed": failed])
 
     // Full Disk Access check. TCC has no public API, so the standard trick is
     // to actually open a file that TCC protects. (isReadableFile/access(2)
