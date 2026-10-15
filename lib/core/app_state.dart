@@ -74,6 +74,12 @@ class AppState extends ChangeNotifier {
 
   bool cleaning = false;
 
+  /// Progress of the running clean (items handled / total, bytes removed so
+  /// far). `cleanTotal == 0` means unknown, so the UI shows an indeterminate bar.
+  int cleanDone = 0;
+  int cleanTotal = 0;
+  int cleanFreedBytes = 0;
+
   /// Bytes freed by the last clean; the UI shows a celebration while non-null.
   int? lastFreed;
 
@@ -88,10 +94,21 @@ class AppState extends ChangeNotifier {
   /// Permanently deletes selected items (bypasses the Trash; a selected Trash
   /// item empties it). Returns bytes freed.
   Future<int> cleanSelected() async {
-    cleaning = true;
-    notifyListeners();
     final paths = selected.toList();
-    final failed = await NativeBridge.deletePermanently(paths);
+    final sizes = {for (final j in junk) j.path: j.bytes};
+    cleaning = true;
+    cleanDone = 0;
+    cleanTotal = paths.length;
+    cleanFreedBytes = 0;
+    notifyListeners();
+    // One native call per item so the UI can show progress.
+    final failed = <String, String>{};
+    for (final path in paths) {
+      failed.addAll(await NativeBridge.deletePermanently([path]));
+      cleanDone++;
+      if (!failed.containsKey(path)) cleanFreedBytes += sizes[path] ?? 0;
+      notifyListeners();
+    }
     final freed = junk
         .where((j) => selected.contains(j.path) && !failed.containsKey(j.path))
         .fold(0, (s, j) => s + j.bytes);
@@ -168,6 +185,9 @@ class AppState extends ChangeNotifier {
     final app = selectedApp;
     if (app == null) return;
     cleaning = true;
+    cleanDone = 0;
+    cleanTotal = 0;
+    cleanFreedBytes = 0;
     notifyListeners();
     final paths = [...selectedLeftovers, if (removeAppBundle) app.info.path];
     final bundleBytes = app.bytes;

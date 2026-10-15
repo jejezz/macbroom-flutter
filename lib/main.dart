@@ -20,6 +20,7 @@ import 'l10n/app_localizations.dart';
 import 'theme/broom_theme.dart';
 import 'update/update_scope.dart';
 import 'update/update_service.dart';
+import 'widgets/cleaning_overlay.dart';
 import 'widgets/freed_overlay.dart';
 import 'widgets/nav_rail.dart';
 
@@ -303,6 +304,8 @@ class _ShellState extends State<_Shell> {
                     ),
                   ),
                 ),
+              if (state.cleaning)
+                Positioned.fill(child: CleaningOverlay(done: state.cleanDone, total: state.cleanTotal, bytes: state.cleanFreedBytes)),
               if (state.lastFreed != null)
                 Positioned.fill(child: FreedOverlay(bytes: state.lastFreed!, toTrash: state.lastFreedToTrash, onDone: state.dismissFreed)),
             ],
